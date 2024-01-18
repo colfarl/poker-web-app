@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" type="text/css" media="screen" href="styles.css">
-    <script src="script.js"></script>
 </head>
 <body>
     <header>
@@ -19,6 +18,31 @@
             </ul>
         </nav>
     </header>
-    <p>Users will be able to play without assistance</p>
+    <button id="deal-button">Deal</button>
+    <div id="game-container">
+        <div id="player1" class="player">
+            <div class="player-cards"></div>
+            <div class="player-info">Player 1</div>
+        </div>
+        <div id="player2" class="player">
+            <div class="player-cards"></div>
+            <div class="player-info">Player 2</div>
+        </div>
+        <div id="player3" class="player">
+            <div class="player-cards"></div>
+            <div class="player-info">Player 3</div>
+        </div>
+        <div id="player4" class="player">
+            <div class="player-cards"></div>
+            <div class="player-info">Player 4</div>
+        </div>
+        <div id="player5" class="player">
+            <div class="player-cards"></div>
+            <div class="player-info">Player 5</div>
+        </div>
+        <div id="winner" class="winner"></div>
+        <div id="community-cards" class="community-cards"></div>
+    </div>
+    <script src="basicDeck.js"></script>
 </body>
 </html>
