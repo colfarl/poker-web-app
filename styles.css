@@ -33,24 +33,98 @@ nav ul li a {
     text-decoration: none;
 }
 
-#player-area {
-    position: fixed;
-    left: 60%;
-    bottom: 0;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-}
-
 #deal-button {
     margin-left: 20px; /* Adjust space between button and cards */
 }
 
-#card-container {
+#game-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.player {
+    display: flex;
+    align-items: center;
+}
+
+#player1 {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#player2 {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%) rotate(90deg);
+    transform-origin: center center;
+}
+
+#player3 {
+    position: absolute;
+    top: 75px;
+    left: 25%;  /* Adjust to move left or right */
+    transform: translateX(-50%);
+}
+
+#player4 {
+    position: absolute;
+    top: 75px;
+    left: 75%;  /* Adjust to move left or right */
+    transform: translateX(-50%);
+}
+
+#player5 {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%) rotate(90deg);
+    transform-origin: center center;
+}
+
+.winner {
+    position: absolute;
+    left: 50%;
+    bottom: 60%;  
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.community-cards {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     justify-content: center;
 }
+
+.player-cards {
+    display: flex;
+}
+
+.player-info {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.community-cards {
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 50px;
+}
+
 .card {
     width: 80px;
     height: 112px;
+    margin: 0 5px;
 }
+
+
