@@ -1,4 +1,5 @@
-//Global variables
+//===================================Global variables===============================
+
 hands=[8, 9, 5, 6, 1,
        2, 3, 10, 4, 7];
 
@@ -25,6 +26,13 @@ const SuitValues = {
     'diamonds':8
 };
 
+let players = [
+    { id: 1, hand: [], type: 'human',chips:1000, currentBet: 0, isInGame: true },
+    { id: 2, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true },
+    { id: 3, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true },
+    { id: 4, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true },
+    { id: 5, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true }
+];
 //============================================Deck Operations====================================================
 //Creates a deck of 52 standard cards
 //Cards are stored in a list as (rank, suit)
@@ -66,19 +74,49 @@ function dealTurnOrRiver(deck, communityCards) {
     return communityCards;
 }
 
-//Shows What Cards Are in Play
-function displayHand(hand, containerId) {
-    const cardContainer = document.getElementById(containerId);
+//=====================================Display Functions=======================================================
+//Shows What Cards a particular player has
+//cards in hand are {rank, suit} player id is an int [0,5]
+function displayHand(hand, playerId) {
+    const cardContainer = document.querySelector(`#player${playerId} .player-cards`);
     cardContainer.innerHTML = ''; // Clear previous cards
 
     hand.forEach(function(card) {
         const cardImg = document.createElement('img');
-        cardImg.src = `./Images/cards/${card.suit}_${card.rank}.png`; // Adjust the path to match your PNG images
+        cardImg.src = `./Images/cards/${card.suit}_${card.rank}.png`; 
         cardImg.className = 'card';
         cardContainer.appendChild(cardImg);
     });
 }
 
+//Displays Community Cards
+function displayCommunity(hand) {
+    const cardContainer = document.getElementById('community-cards');
+    cardContainer.innerHTML = ''; 
+
+    hand.forEach(function(card) {
+        const cardImg = document.createElement('img');
+        cardImg.src = `./Images/cards/${card.suit}_${card.rank}.png`;
+        cardImg.className = 'card';
+        cardContainer.appendChild(cardImg);
+    });
+}
+
+//Shows cards back of players
+//uses same logic as display hand except it uses a card back as image
+function displayFaceDown(hand, playerId) {
+    const cardContainer = document.querySelector(`#player${playerId} .player-cards`);
+    cardContainer.innerHTML = ''; // Clear previous cards
+
+    hand.forEach(function(card) {
+        const cardImg = document.createElement('img');
+        cardImg.src = `./Images/cards/card_back.png`; 
+        cardImg.className = 'card';
+        cardContainer.appendChild(cardImg);
+    });
+}
+
+//Shows which player wins above community cards
 function displayWinner(winner) {
     console.log(winner);
     const winningHandDiv = document.getElementById('winner');
@@ -96,12 +134,12 @@ function getCardValue(card) {
     return CardValues[card.rank];
 }
 
+// Maps suit to bit value for evaluation
 function getSuitValue(card) {
     return SuitValues[card.suit];
 }
 
-//generate all possible 5 card combinations 
-//from a 7 card hand
+//generates combinations of size k from array
 function generateCombinations(array, k) {
     let result = [];
     let n = array.length;
@@ -194,6 +232,7 @@ function evaluateHand(playerHand, communityCards) {
     return bestHand;
 }
 
+//Determines best hand among all players
 function evaluateAllHands(players, communityCards) {
     let bestHandScore = 0;
     let bestHandIndex = -1;
@@ -210,15 +249,61 @@ function evaluateAllHands(players, communityCards) {
 
     return bestHandIndex;
 }
-//================== Early game Logic =============================================================================================
-let players = [
-    { id: 1, hand: [], type: 'human', chips: 1000 },
-    { id: 2, hand: [], type: 'bot', chips: 1000 },
-    { id: 3, hand: [], type: 'bot', chips: 1000 },
-    { id: 4, hand: [], type: 'bot', chips: 1000 },
-    { id: 5, hand: [], type: 'bot', chips: 1000 }
-];
+//================== Betting Logic ====================================
+function bet(player, amount) {
+    if (player.chips >= amount) {
+        player.chips -= amount;
+        player.currentBet += amount;
+        pot += amount;
+    } else {
+        console.error('Not enough chips.');
+    }
+}
 
+function call(player, highestBet) {
+    const amount = highestBet - player.currentBet;
+    bet(player, amount);
+}
+
+function raise(player, amount) {
+    if (amount >= 2 * highestBet) {
+        bet(player, amount);
+        highestBet = player.currentBet; 
+    } else {
+        console.error('Raise must be at least double the previous bet.');
+    }
+}
+
+function check(player) {
+    if (highestBet === 0 || player.currentBet === highestBet) {
+        // Proceed to the next player's turn
+    } else {
+        console.error('Cannot check, there is a bet already.');
+    }
+}
+
+let resolvePlayerAction;
+
+function waitForPlayerDecision() {
+    return new Promise((resolve) => {
+        resolvePlayerAction = resolve;
+    });
+}
+
+function playerAction(action) {
+    console.log(`Player decides to ${action}`);
+    resolvePlayerAction(action);
+}
+
+function updateChipTotal(playerId) {
+    const player = players.find(p => p.id === playerId);
+    const chipDisplay = document.getElementById(`player${playerId}-chips`);
+    chipDisplay.innerText = `Chips: ${player.chips}`;
+}
+//================== Early game Logic =============================================================================================
+
+//Deal two cards to each player by taking the next two available cards 
+//off the top of the deck
 function dealHands(deck) {
     players.forEach(player => {
         if (deck.length < 2) {
@@ -228,80 +313,101 @@ function dealHands(deck) {
     });
 }
 
+//NOT IMPLEMENTED
 function botDecision(player) {
     console.log(`Player ${player.id} makes decision.`);
 }
 
-function playRound() {
+//basic Round logic
+async function playRound() {
     let deck = createDeck();
     shuffleDeck(deck);
     let communityCards = [];
 
     //Pre-flop
     dealHands(deck);
-    players.forEach(player => {
+
+    //Show player hand - hide all other hands
+    displayHand(players[0].hand, 1); 
+    displayFaceDown(players[1].hand, 2);
+    displayFaceDown(players[2].hand, 3);
+    displayFaceDown(players[3].hand, 4);
+    displayFaceDown(players[4].hand, 5);
+    for (const player of players) {
         if (player.type === 'bot') {
             botDecision(player);
         } else {
-            console.log(`Player ${player.id} makes decision.`);
+            console.log(`Waiting for Player ${player.id} to make a decision.`);
+            const action = await waitForPlayerDecision();
+            console.log(`Player ${player.id} has decided to ${action}.`);
         }
-    });
-    displayHand(players[0].hand, 'player1');
-    displayHand(players[1].hand, 'player2');
-    displayHand(players[2].hand, 'player3');
-    displayHand(players[3].hand, 'player4');
-    displayHand(players[4].hand, 'player5');
+    }
 
     // Deal the flop
     communityCards = dealFlop(deck, communityCards);
-    displayHand(communityCards, 'community-cards');
+    displayCommunity(communityCards);
     
     //Flop round of betting
-    players.forEach(player => {
+    for (const player of players) {
         if (player.type === 'bot') {
             botDecision(player);
         } else {
-            console.log(`Player ${player.id} makes decision.`);
+            console.log(`Waiting for Player ${player.id} to make a decision.`);
+            const action = await waitForPlayerDecision();
+            console.log(`Player ${player.id} has decided to ${action}.`);
         }
-    });
+    }
 
     //Deal the Turn 
     dealTurnOrRiver(deck, communityCards);
-    displayHand(communityCards, 'community-cards');
+    displayCommunity(communityCards);
 
     //Turn round of betting
-    players.forEach(player => {
+    for (const player of players) {
         if (player.type === 'bot') {
             botDecision(player);
         } else {
-            console.log(`Player ${player.id} makes decision.`);
+            console.log(`Waiting for Player ${player.id} to make a decision.`);
+            const action = await waitForPlayerDecision();
+            console.log(`Player ${player.id} has decided to ${action}.`);
         }
-    });
+    }
 
     //Deal river
     dealTurnOrRiver(deck, communityCards);
-    displayHand(communityCards, 'community-cards');
+    displayCommunity(communityCards);
 
     //River round of betting
-    players.forEach(player => {
+    for (const player of players) {
         if (player.type === 'bot') {
             botDecision(player);
         } else {
-            console.log(`Player ${player.id} makes decision.`);
+            console.log(`Waiting for Player ${player.id} to make a decision.`);
+            const action = await waitForPlayerDecision();
+            console.log(`Player ${player.id} has decided to ${action}.`);
         }
-    });
+    }
     
     //Find Best Hand
     const winner = evaluateAllHands(players, communityCards);
     console.log(winner);
+
+    //end display
     displayWinner(winner);
+    displayHand(players[1].hand, 2);
+    displayHand(players[2].hand, 3);
+    displayHand(players[3].hand, 4);
+    displayHand(players[4].hand, 5);
 }
 
 //Subject to change but this function waits for the page to be loaded and once it is
 // it creates a deck and listens for button press which will then start a 2 card hand
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('deal-button').addEventListener('click', function() {
-        playRound();
-    });
-});
 
+document.getElementById('player1-call').addEventListener('click', () => playerAction('call'));
+document.getElementById('player1-raise').addEventListener('click', () => playerAction('raise'));
+document.getElementById('player1-fold').addEventListener('click', () => playerAction('fold'));
+document.getElementById('player1-check').addEventListener('click', () => playerAction('check'));
+
+document.getElementById('deal-button').addEventListener('click', function() {
+    playRound();
+});
