@@ -19,30 +19,31 @@
         </nav>
     </header>
     <button id="deal-button">Deal</button>
-    <div id="game-container">
-        <div id="player1" class="player">
-            <div class="player-cards"></div>
-            <div class="player-info">Player 1</div>
+    <div id="player1" class="player">
+        <div class="player-cards"></div>
+        <div class="betting-options">
+            <button class="bet-btn" id="player1-call">Call</button>
+            <button class="bet-btn" id="player1-check">Check</button>
+            <button class="bet-btn" id="player1-raise">Raise</button>
+            <button class="bet-btn" id="player1-fold">Fold</button>
+            <button class="bet-btn" id="player1-allin">All In</button>
+            <div id="player1-chips" class="chip-total">Chips: 1000</div>
         </div>
-        <div id="player2" class="player">
-            <div class="player-cards"></div>
-            <div class="player-info">Player 2</div>
-        </div>
-        <div id="player3" class="player">
-            <div class="player-cards"></div>
-            <div class="player-info">Player 3</div>
-        </div>
-        <div id="player4" class="player">
-            <div class="player-cards"></div>
-            <div class="player-info">Player 4</div>
-        </div>
-        <div id="player5" class="player">
-            <div class="player-cards"></div>
-            <div class="player-info">Player 5</div>
-        </div>
-        <div id="winner" class="winner"></div>
-        <div id="community-cards" class="community-cards"></div>
     </div>
+    <div id="player2" class="player">
+        <div class="player-cards"></div>
+    </div>
+    <div id="player3" class="player">
+        <div class="player-cards"></div>
+    </div>
+    <div id="player4" class="player">
+        <div class="player-cards"></div>
+    </div>
+    <div id="player5" class="player">
+        <div class="player-cards"></div>
+    </div>
+    <div id="winner" class="winner"></div>
+    <div id="community-cards" class="community-cards"></div>
     <script src="basicDeck.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 body {
-    background: green;
+    background: rgb(13, 94, 13);
     background-size: cover;
     font-family: Arial, sans-serif; 
     margin: 0;
@@ -59,7 +59,7 @@ nav ul li a {
 #player2 {
     position: absolute;
     top: 50%;
-    left: 10px;
+    left: 5px;
     transform: translateY(-50%) rotate(90deg);
     transform-origin: center center;
 }
@@ -95,6 +95,7 @@ nav ul li a {
 }
 
 .community-cards {
+    z-index: 1;
     position: absolute;
     left: 50%;
     top: 50%;
@@ -127,4 +128,39 @@ nav ul li a {
     margin: 0 5px;
 }
 
+.betting-options {
+    z-index: 10;
+    background-color: lightgrey;
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    flex-wrap: wrap; /* Allow the items to wrap onto the next line */
+    gap: 5px; /* Spacing between buttons */
+    margin-left: 10px; /* Distance from the player's hand */
+    width: 220px; /* Adjust the width as needed */
+}
 
+.bet-btn {
+    z-index: 11;
+    padding: 5px 10px;
+    font-size: 14px;
+    color: white;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.bet-btn:hover {
+    background-color: #0056b3;
+}
+
+.chip-total {
+    background-color: #f8f9fa; /* Light background */
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-top: 5px; /* Spacing from the last button */
+    text-align: center;
+    font-size: 14px;
+}
