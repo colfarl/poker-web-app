@@ -3,6 +3,9 @@
 hands=[8, 9, 5, 6, 1,
        2, 3, 10, 4, 7];
 
+handRank = ["4 of a Kind", "Straight Flush", "Straight", "Flush", "High Card",
+"Pair", "Two Pair", "Royal Flush", "3 of a Kind", "Full House" ];
+
 const CardValues = {
     '2':2,
     '3':3,
@@ -27,18 +30,22 @@ const SuitValues = {
 };
 
 let players = [
-    { id: 1, hand: [], type: 'human',chips:1000, currentBet: 0, isInGame: true },
-    { id: 2, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true },
-    { id: 3, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true },
-    { id: 4, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true },
-    { id: 5, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true }
+    { id: 1, hand: [], type: 'human',chips:50000, currentBet: 0, isInGame: true, hasActed: false },
+    { id: 2, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false },
+    { id: 3, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false },
+    { id: 4, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false },
+    { id: 5, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false }
 ];
 
 let pot = 0;
 let highestBet = 0;
 let currentStage = 'pre-flop'; 
 let gameState = 'notStarted';
-
+let smallBlind = 25;
+let bigBlind = 50;
+let dealerPosition = 0;
+let smallBlindPosition = (dealerPosition + 1) % players.length;
+let bigBlindPosition = (dealerPosition + 2) % players.length;
 //============================================Deck Operations====================================================
 //Creates a deck of 52 standard cards
 //Cards are stored in a list as (rank, suit)
@@ -95,6 +102,14 @@ function displayHand(hand, playerId) {
     });
 }
 
+function updateActionLog(message) {
+    const log = document.getElementById('action-log');
+    const newAction = document.createElement('p');
+    newAction.textContent = message;
+    log.appendChild(newAction); // Append the new message as a separate paragraph
+    log.scrollTop = log.scrollHeight; // Scroll to the bottom of the log
+}
+
 //Displays Community Cards
 function displayCommunity(hand) {
     document.getElementById('community-cards').style.display = 'flex';
@@ -123,19 +138,6 @@ function displayFaceDown(hand, playerId) {
     });
 }
 
-//Shows which player wins above community cards
-function displayWinner(winner) {
-    console.log(winner);
-    document.getElementById('winner').style.display = 'flex';
-    const winningHandDiv = document.getElementById('winner');
-    winningHandDiv.innerHTML = ''; // Clear previous content
-
-    // Display text
-    const text = document.createElement('div');
-    text.innerText = `Player ${winner + 1} wins`;
-    winningHandDiv.appendChild(text);  // Append the text to the div
-}
-
 function displayGameEndOptions() {
     document.getElementById('stop-playing-button').style.display = 'block';
     document.getElementById('next-game-button').style.display = 'block';
@@ -152,6 +154,7 @@ function initializeGame() {
     document.getElementById('raiseAmountLabel').style.display = 'none';
     document.getElementById('potDisplay').style.display = 'none';
     document.getElementById('player1').style.display = 'none';
+    document.getElementById('action-log').style.display = 'none';
 
     // Show only the 'Deal' button initially
     document.getElementById('start-button').style.display = 'block';
@@ -169,10 +172,10 @@ function inProgressUI() {
     document.getElementById('raiseAmountLabel').style.display = 'flex';
     document.getElementById('potDisplay').style.display = 'flex';
     document.getElementById('player1').style.display = 'flex';
+    document.getElementById('action-log').style.display = 'block';
 }
 
 function displayGameEndOptions() {
-    console.log("uh oh");
     document.getElementById('stop-playing-button').style.display = 'block';
     document.getElementById('next-game-button').style.display = 'block';
 }
@@ -281,22 +284,29 @@ function evaluateHand(playerHand, communityCards) {
     return bestHand;
 }
 
-//Determines best hand among all players
 function evaluateAllHands(players, communityCards) {
     let bestHandScore = 0;
-    let bestHandIndex = -1;
-    let bestHand = null;
+    let winners = []; 
 
     players.forEach((player, index) => {
-        const [rank, score, hand] = evaluateHand(player.hand, communityCards);
-        if (rank > bestHandScore || (rank === bestHandScore && score > bestHand[1])) {
-            bestHandScore = rank;
-            bestHandIndex = index;
-            bestHand = [rank, score, hand];
+        if (player.isInGame) {
+            const [rank, score, hand] = evaluateHand(player.hand, communityCards);
+
+            // Compare the rank and score to determine the best hand or ties
+            if (rank > bestHandScore) {
+                bestHandScore = rank;
+                winners = [index]; 
+            } else if (rank === bestHandScore) {
+                if (score > (winners.length > 0 ? evaluateHand(players[winners[0]].hand, communityCards)[1] : 0)) {
+                    winners = [index];
+                } else if (score === evaluateHand(players[winners[0]].hand, communityCards)[1]) {
+                    winners.push(index); 
+                }
+            }
         }
     });
 
-    return bestHandIndex;
+    return winners;
 }
 //================== Betting Logic ====================================================================
 function bet(player, amount) {
@@ -308,7 +318,6 @@ function bet(player, amount) {
         
         //Update UI
         updatePotTotal();
-        console.log(player.chips);
         updatePlayerChips(player, player.chips);
     } else {
         console.error('Not enough chips.');
@@ -327,17 +336,22 @@ function updatePotTotal() {
 
 function fold(player) {
     player.isInGame = false;
+    updateActionLog(`Player ${player.id} folds`);
 }
 
 function call(player) {
     const amount = highestBet - player.currentBet;
     bet(player, amount);
+    updateActionLog(`Player ${player.id} calls (${amount} chips)`);
 }
 
 function raise(player, amount) {
     if (amount >= 2 * highestBet) {
         bet(player, amount);
         highestBet = player.currentBet; 
+        resetAction();
+        player.hasActed = true;
+        updateActionLog(`Player ${player.id} raises ${amount} chips`);
     } else {
         console.error('Raise must be at least double the previous bet.');
     }
@@ -345,7 +359,7 @@ function raise(player, amount) {
 
 function check(player) {
     if (highestBet === 0 || player.currentBet === highestBet) {
-        // Proceed to the next player's turn
+        updateActionLog(`Player ${player.id} checks`);
     } else {
         console.error('Cannot check, there is a bet already.');
     }
@@ -364,33 +378,70 @@ function playerAction(action) {
     resolvePlayerAction(action);
 }
 
+function handlePlayerAction(player, action) {
+    switch(action) {
+        case 'call':
+            call(player, highestBet);
+            break;
+        case 'fold':
+            fold(player);
+            break;
+        case 'check':
+            check(player);
+            break;
+        case 'allin':
+            bet(player, player.chips);
+            break;
+        default:
+            console.error(`Unknown action: ${action}`);
+    }
+}
+
+function resetAction(){
+    players.forEach(player =>{
+        if(player.isInGame){
+            player.hasActed = false;
+        }
+    })
+}
+function allPlayersActed() {
+    return players.every(player => !player.isInGame || player.hasActed);
+}
+
+function highestBetEqualized() {
+    return players.every(player => !player.isInGame || player.currentBet === highestBet);
+}
+
 async function bettingRound() {
-    for (const player of players) {
+    let bettingContinues = true;
+    let currentPlayerIndex = (bigBlindPosition + 1) % players.length;
+    if(currentStage !== 'pre-flop'){
+        currentPlayerIndex = smallBlindPosition % players.length;
+    }
+
+    while (bettingContinues) {
+        const player = players[currentPlayerIndex];
+
         if (player.isInGame) {
             if (player.type === 'bot') {
                 botDecision(player);
             } else {
-                console.log(`Waiting for Player ${player.id} to make a decision.`);
                 const action = await waitForPlayerDecision();
-                console.log(`Player ${player.id} has decided to ${action}.`);
-                switch(action) {
-                    case 'call':
-                        call(player, highestBet);
-                        break;
-                    case 'fold':
-                        fold(player);
-                        break;
-                    case 'check':
-                        check(player);
-                        break;
-                    case 'allin':
-                        bet(player, player.chips);
-                        break;
-                    default:
-                        console.error(`Unknown action: ${action}`);
+                if(action !== 'raise'){
+                    handlePlayerAction(player, action);
                 }
+                player.hasActed = true; // Mark that the player has taken an action
             }
         }
+
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+
+        // Check if it's time to end the betting round
+        if (allPlayersActed() && highestBetEqualized()) {
+            bettingContinues = false;
+        }
+        console.log(allPlayersActed());
+        console.log(highestBetEqualized());
     }
 }
 
@@ -405,11 +456,26 @@ function resetGame() {
     currentStage = 'pre-flop';
 }
 
-function awardWinner(winner) {
-    players[winner].chips += pot;
-    updatePlayerChips(players[winner], players[winner].chips);
-    console.log(`Player ${winner + 1} wins the pot of ${pot} chips!`);
+function awardWinner(winners, communityCards) {
+    if (winners.length === 1) {
+        // Single winner
+        const winner = winners[0];
+        players[winner].chips += pot;
+        updatePlayerChips(players[winner], players[winner].chips);
+        const [rank, _score, _hand] = evaluateHand(players[winner].hand, communityCards);
+        updateActionLog(`Player ${players[winner].id} wins the pot of ${pot} chips with a ${handRank[rank]}`);
+    } else {
+        // Multiple winners - chop the pot
+        const splitPot = Math.floor(pot / winners.length);
+        let winnersLog = winners.map(winner => `Player ${players[winner].id}`);
+        winners.forEach(winner => {
+            players[winner].chips += splitPot;
+            updatePlayerChips(players[winner], players[winner].chips);
+        });
+        updateActionLog(`${winnersLog.join(", ")} split the pot of ${pot} chips, each receiving ${splitPot} chips`);
+    }
 }
+
 //================== Early game Logic =============================================================================================
 function updateGameState(newState) {
     gameState = newState;
@@ -433,8 +499,9 @@ async function nextGame() {
     document.getElementById('next-game-button').style.display = 'none';
     document.getElementById('stop-playing-button').style.display = 'none';
     document.getElementById('community-cards').style.display = 'none';
-    document.getElementById('winner').style.display = 'none';
+
     updateGameState('inProgress');
+    rotateDealer();
     updatePotTotal();
     await playRound();
     updateGameState('finished');
@@ -453,44 +520,80 @@ function dealHands(deck) {
 
 //NOT IMPLEMENTED
 function botDecision(player) {
-    console.log(`Player ${player.id} makes decision.`);
     if(highestBet === 0){
         check(player);
+        player.hasActed = true;
     }
     else{
         call(player);
+        player.hasActed = true;
     }
+}
+
+function postBlinds() {
+    bet(players[smallBlindPosition], smallBlind);
+    bet(players[bigBlindPosition], bigBlind);
+    players[bigBlindPosition].hasActed = true;
+    players[smallBlindPosition].hasActed = true;
+    updateActionLog(`Player ${players[smallBlindPosition].id} bets ${smallBlind} (small blind)`);
+    updateActionLog(`Player ${players[bigBlindPosition].id} bets ${bigBlind} (big blind)`);
+}
+
+function rotateDealer() {
+    dealerPosition = (dealerPosition + 1) % players.length;
+    smallBlindPosition = (dealerPosition + 1) % players.length;
+    bigBlindPosition = (dealerPosition + 2) % players.length;
+}
+
+function resetBetting(){
+    highestBet = 0;
+    players.forEach(player => {
+        player.currentBet = 0;
+    });
 }
 
 //basic Round logic
 async function playRound() {
+    updateActionLog('------Pre-Flop-------');
     let deck = createDeck();
     shuffleDeck(deck);
     let communityCards = [];
 
     //Pre-flop
     dealHands(deck);
-
+    
     //Show player hand - hide all other hands
     displayHand(players[0].hand, 1); 
     displayFaceDown(players[1].hand, 2);
     displayFaceDown(players[2].hand, 3);
     displayFaceDown(players[3].hand, 4);
     displayFaceDown(players[4].hand, 5);
+    postBlinds();
+
     await bettingRound();
 
     // Deal the flop
     communityCards = dealFlop(deck, communityCards);
     displayCommunity(communityCards);
     
+    
     //Flop round of betting
+    currentStage = "flop";
+    resetAction();
+    resetBetting();
+    updateActionLog('--------Flop---------');
     await bettingRound();
 
     //Deal the Turn 
     dealTurnOrRiver(deck, communityCards);
     displayCommunity(communityCards);
 
+
     //Turn round of betting
+    updateActionLog('--------Turn---------');
+    currentStage = "turn";
+    resetAction();
+    resetBetting();
     await bettingRound();
 
     //Deal river
@@ -498,19 +601,21 @@ async function playRound() {
     displayCommunity(communityCards);
 
     //River round of betting
+    updateActionLog('--------River---------');
+    currentStage = "river";
+    resetAction();
+    resetBetting();
     await bettingRound();
     
     //Find Best Hand
-    const winner = evaluateAllHands(players, communityCards);
-    console.log(winner);
+    const winners = evaluateAllHands(players, communityCards);
 
     //end display
-    displayWinner(winner);
     displayHand(players[1].hand, 2);
     displayHand(players[2].hand, 3);
     displayHand(players[3].hand, 4);
     displayHand(players[4].hand, 5);
-    awardWinner(winner);
+    awardWinner(winners, communityCards);
     resetGame();
 }
 

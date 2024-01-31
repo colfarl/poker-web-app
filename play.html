@@ -18,39 +18,41 @@
             </ul>
         </nav>
     </header>
-    <button id="deal-button">Deal</button>
+    <div class="center-container">
+        <button id="start-button">Start Game</button>
+    </div>
     <div id="potDisplay">Pot: 0</div>
-    <div id="player1" class="player">
+    <div id="chipPopup" style="display: none;"></div>
+    <div id="player1" class="player" data-chips="50000">
         <div class="player-cards"></div>
         <div class="betting-options">
             <button class="bet-btn" id="player1-call">Call</button>
             <button class="bet-btn" id="player1-check">Check</button>
             <button class="bet-btn" id="player1-fold">Fold</button>
             <button class="bet-btn" id="player1-allin">All In</button>
-            <input type="range" id="raiseSlider" min="0" max="1000" value="0" step="10">
-            <span id="raiseAmountLabel">Raise Amount: 0</span>
+            <input type="range" id="raiseSlider" min="50" max="10000" value="50" step="50">
+            <span id="raiseAmountLabel">Raise Amount: 50</span>
             <button class="bet-btn" id="player1-raise">Raise</button>
         </div>
-        <div id="player1-chips" class="chip-total">Chips: 1000</div>
     </div>
-    <div id="player2" class="player">
+    <div id="player2" class="player" data-chips="1000">
         <div class="player-cards"></div>
-        <div id="chipPopup" style="display: none;">Chips: 1000</div>
     </div>
-    <div id="player3" class="player">
+    <div id="player3" class="player" data-chips="1000">
         <div class="player-cards"></div>
-        <div id="chipPopup" style="display: none;">Chips: 1000</div>
     </div>
-    <div id="player4" class="player">
+    <div id="player4" class="player" data-chips="1000">
         <div class="player-cards"></div>
-        <div id="chipPopup" style="display: none;">Chips: 1000</div>
     </div>
-    <div id="player5" class="player">
+    <div id="player5" class="player" data-chips="1000">
         <div class="player-cards"></div>
-        <div id="chipPopup" style="display: none;">Chips: 1000</div>
     </div>
-    <div id="winner" class="winner"></div>
+    <div id="game-controls">
+        <button id="stop-playing-button" style="display: none;">Stop Playing</button>
+        <button id="next-game-button" style="display: none;">Next Game</button>
+    </div>
     <div id="community-cards" class="community-cards"></div>
+    <div id="action-log"></div>
     <script src="basicDeck.js"></script>
 </body>
 </html>
