@@ -33,6 +33,12 @@ let players = [
     { id: 4, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true },
     { id: 5, hand: [], type: 'bot', chips: 1000, currentBet: 0, isInGame: true }
 ];
+
+let pot = 0;
+let highestBet = 0;
+let currentStage = 'pre-flop'; 
+let gameState = 'notStarted';
+
 //============================================Deck Operations====================================================
 //Creates a deck of 52 standard cards
 //Cards are stored in a list as (rank, suit)
@@ -74,7 +80,7 @@ function dealTurnOrRiver(deck, communityCards) {
     return communityCards;
 }
 
-//=====================================Display Functions=======================================================
+//=====================================UI Functions=======================================================
 //Shows What Cards a particular player has
 //cards in hand are {rank, suit} player id is an int [0,5]
 function displayHand(hand, playerId) {
@@ -91,6 +97,7 @@ function displayHand(hand, playerId) {
 
 //Displays Community Cards
 function displayCommunity(hand) {
+    document.getElementById('community-cards').style.display = 'flex';
     const cardContainer = document.getElementById('community-cards');
     cardContainer.innerHTML = ''; 
 
@@ -119,6 +126,7 @@ function displayFaceDown(hand, playerId) {
 //Shows which player wins above community cards
 function displayWinner(winner) {
     console.log(winner);
+    document.getElementById('winner').style.display = 'flex';
     const winningHandDiv = document.getElementById('winner');
     winningHandDiv.innerHTML = ''; // Clear previous content
 
@@ -126,6 +134,47 @@ function displayWinner(winner) {
     const text = document.createElement('div');
     text.innerText = `Player ${winner + 1} wins`;
     winningHandDiv.appendChild(text);  // Append the text to the div
+}
+
+function displayGameEndOptions() {
+    document.getElementById('stop-playing-button').style.display = 'block';
+    document.getElementById('next-game-button').style.display = 'block';
+}
+
+function initializeGame() {
+    // Hide betting buttons at the start
+    document.querySelectorAll('.betting-options button').forEach(button => {
+        button.style.display = 'none';
+    });
+
+    // Hide the raise slider and label
+    document.getElementById('raiseSlider').style.display = 'none';
+    document.getElementById('raiseAmountLabel').style.display = 'none';
+    document.getElementById('potDisplay').style.display = 'none';
+    document.getElementById('player1').style.display = 'none';
+
+    // Show only the 'Deal' button initially
+    document.getElementById('start-button').style.display = 'block';
+}
+
+function inProgressUI() {
+    // Hide the 'Start' button
+    document.getElementById('start-button').style.display = 'none';
+    document.querySelectorAll('.betting-options button').forEach(button => {
+        button.style.display = 'inline-block'; // or 'block', depending on your layout
+    });
+
+    // Show the raise slider and label
+    document.getElementById('raiseSlider').style.display = 'inline-block'; // or 'block'
+    document.getElementById('raiseAmountLabel').style.display = 'flex';
+    document.getElementById('potDisplay').style.display = 'flex';
+    document.getElementById('player1').style.display = 'flex';
+}
+
+function displayGameEndOptions() {
+    console.log("uh oh");
+    document.getElementById('stop-playing-button').style.display = 'block';
+    document.getElementById('next-game-button').style.display = 'block';
 }
 //====================== Hand Evaluation Logic ====================================================================================
 
@@ -249,18 +298,38 @@ function evaluateAllHands(players, communityCards) {
 
     return bestHandIndex;
 }
-//================== Betting Logic ====================================
+//================== Betting Logic ====================================================================
 function bet(player, amount) {
     if (player.chips >= amount) {
         player.chips -= amount;
         player.currentBet += amount;
         pot += amount;
+        highestBet = Math.max(highestBet, player.currentBet);
+        
+        //Update UI
+        updatePotTotal();
+        console.log(player.chips);
+        updatePlayerChips(player, player.chips);
     } else {
         console.error('Not enough chips.');
     }
 }
 
-function call(player, highestBet) {
+function updatePlayerChips(player, newChipTotal) {
+    const playerElement = document.getElementById(`player${player.id}`);
+    playerElement.setAttribute('data-chips', newChipTotal);
+}
+
+function updatePotTotal() {
+    const potDisplay = document.getElementById('potDisplay');
+    potDisplay.innerText = `Pot: ${pot}`;
+}
+
+function fold(player) {
+    player.isInGame = false;
+}
+
+function call(player) {
     const amount = highestBet - player.currentBet;
     bet(player, amount);
 }
@@ -295,12 +364,81 @@ function playerAction(action) {
     resolvePlayerAction(action);
 }
 
-function updateChipTotal(playerId) {
-    const player = players.find(p => p.id === playerId);
-    const chipDisplay = document.getElementById(`player${playerId}-chips`);
-    chipDisplay.innerText = `Chips: ${player.chips}`;
+async function bettingRound() {
+    for (const player of players) {
+        if (player.isInGame) {
+            if (player.type === 'bot') {
+                botDecision(player);
+            } else {
+                console.log(`Waiting for Player ${player.id} to make a decision.`);
+                const action = await waitForPlayerDecision();
+                console.log(`Player ${player.id} has decided to ${action}.`);
+                switch(action) {
+                    case 'call':
+                        call(player, highestBet);
+                        break;
+                    case 'fold':
+                        fold(player);
+                        break;
+                    case 'check':
+                        check(player);
+                        break;
+                    case 'allin':
+                        bet(player, player.chips);
+                        break;
+                    default:
+                        console.error(`Unknown action: ${action}`);
+                }
+            }
+        }
+    }
+}
+
+function resetGame() {
+    players.forEach(player => {
+        player.hand = [];
+        player.currentBet = 0;
+        player.isInGame = true;
+    });
+    pot = 0;
+    highestBet = 0;
+    currentStage = 'pre-flop';
+}
+
+function awardWinner(winner) {
+    players[winner].chips += pot;
+    updatePlayerChips(players[winner], players[winner].chips);
+    console.log(`Player ${winner + 1} wins the pot of ${pot} chips!`);
 }
 //================== Early game Logic =============================================================================================
+function updateGameState(newState) {
+    gameState = newState;
+    switch(gameState) {
+        case 'notStarted':
+            initializeGame();
+            break;
+        case 'inProgress':
+            inProgressUI();
+            break;
+        case 'finished':
+            displayGameEndOptions();
+            break;
+        default:
+            console.log("Invalid Game State");
+            break;
+    }
+}
+
+async function nextGame() {
+    document.getElementById('next-game-button').style.display = 'none';
+    document.getElementById('stop-playing-button').style.display = 'none';
+    document.getElementById('community-cards').style.display = 'none';
+    document.getElementById('winner').style.display = 'none';
+    updateGameState('inProgress');
+    updatePotTotal();
+    await playRound();
+    updateGameState('finished');
+}
 
 //Deal two cards to each player by taking the next two available cards 
 //off the top of the deck
@@ -316,6 +454,12 @@ function dealHands(deck) {
 //NOT IMPLEMENTED
 function botDecision(player) {
     console.log(`Player ${player.id} makes decision.`);
+    if(highestBet === 0){
+        check(player);
+    }
+    else{
+        call(player);
+    }
 }
 
 //basic Round logic
@@ -333,60 +477,28 @@ async function playRound() {
     displayFaceDown(players[2].hand, 3);
     displayFaceDown(players[3].hand, 4);
     displayFaceDown(players[4].hand, 5);
-    for (const player of players) {
-        if (player.type === 'bot') {
-            botDecision(player);
-        } else {
-            console.log(`Waiting for Player ${player.id} to make a decision.`);
-            const action = await waitForPlayerDecision();
-            console.log(`Player ${player.id} has decided to ${action}.`);
-        }
-    }
+    await bettingRound();
 
     // Deal the flop
     communityCards = dealFlop(deck, communityCards);
     displayCommunity(communityCards);
     
     //Flop round of betting
-    for (const player of players) {
-        if (player.type === 'bot') {
-            botDecision(player);
-        } else {
-            console.log(`Waiting for Player ${player.id} to make a decision.`);
-            const action = await waitForPlayerDecision();
-            console.log(`Player ${player.id} has decided to ${action}.`);
-        }
-    }
+    await bettingRound();
 
     //Deal the Turn 
     dealTurnOrRiver(deck, communityCards);
     displayCommunity(communityCards);
 
     //Turn round of betting
-    for (const player of players) {
-        if (player.type === 'bot') {
-            botDecision(player);
-        } else {
-            console.log(`Waiting for Player ${player.id} to make a decision.`);
-            const action = await waitForPlayerDecision();
-            console.log(`Player ${player.id} has decided to ${action}.`);
-        }
-    }
+    await bettingRound();
 
     //Deal river
     dealTurnOrRiver(deck, communityCards);
     displayCommunity(communityCards);
 
     //River round of betting
-    for (const player of players) {
-        if (player.type === 'bot') {
-            botDecision(player);
-        } else {
-            console.log(`Waiting for Player ${player.id} to make a decision.`);
-            const action = await waitForPlayerDecision();
-            console.log(`Player ${player.id} has decided to ${action}.`);
-        }
-    }
+    await bettingRound();
     
     //Find Best Hand
     const winner = evaluateAllHands(players, communityCards);
@@ -398,16 +510,67 @@ async function playRound() {
     displayHand(players[2].hand, 3);
     displayHand(players[3].hand, 4);
     displayHand(players[4].hand, 5);
+    awardWinner(winner);
+    resetGame();
 }
 
-//Subject to change but this function waits for the page to be loaded and once it is
-// it creates a deck and listens for button press which will then start a 2 card hand
+//=================================Event Listeners======================================
+window.onload = initializeGame();
+
+//End of game actions
+document.getElementById('next-game-button').addEventListener('click', nextGame);
 
 document.getElementById('player1-call').addEventListener('click', () => playerAction('call'));
-document.getElementById('player1-raise').addEventListener('click', () => playerAction('raise'));
+document.getElementById('player1-raise').addEventListener('click', () => {
+    const raiseAmount = parseInt(document.getElementById('raiseSlider').value || '0');
+
+    // Perform the raise action
+    const currentPlayer = players[0];
+    raise(currentPlayer, raiseAmount);
+
+    // Reset the slider to the minimum value after raising
+    document.getElementById('raiseSlider').value = document.getElementById('raiseSlider').min;
+    document.getElementById('raiseAmountLabel').innerText = `Raise Amount: ${document.getElementById('raiseSlider').min}`;
+    resolvePlayerAction('raise');
+});
+
 document.getElementById('player1-fold').addEventListener('click', () => playerAction('fold'));
 document.getElementById('player1-check').addEventListener('click', () => playerAction('check'));
+document.getElementById('player1-allin').addEventListener('click', () => playerAction('allin'));
 
-document.getElementById('deal-button').addEventListener('click', function() {
-    playRound();
+document.getElementById('raiseSlider').addEventListener('input', () => {
+    const raiseAmount = document.getElementById('raiseSlider').value;
+    document.getElementById('raiseAmountLabel').innerText = `Raise Amount: ${raiseAmount}`;
+});
+
+document.getElementById('start-button').addEventListener('click', async function() {
+    updateGameState('inProgress');
+    await playRound();
+    updateGameState('finished');
+});
+
+//
+document.querySelectorAll('.player').forEach(player => {
+    player.addEventListener('mouseenter', (event) => {
+        const chips = player.dataset.chips; 
+
+        // Set the text for the pop-up
+        const chipPopup = document.getElementById('chipPopup');
+        chipPopup.innerText = `Chips: ${chips}`;
+
+        // Get the position of the player container
+        const rect = player.getBoundingClientRect();
+
+        // Adjust the position of the popup based on the player's position
+        chipPopup.style.top = `${window.scrollY + rect.top - chipPopup.offsetHeight - 5}px`; // 5px above the player
+        chipPopup.style.left = `${window.scrollX + rect.left + (rect.width - chipPopup.offsetWidth) / 2}px`; // horizontally centered relative to the player
+
+        // Show the pop-up
+        chipPopup.style.display = 'block';
+    });
+
+    player.addEventListener('mouseleave', () => {
+        // Hide the pop-up
+        document.getElementById('chipPopup').style.display = 'none';
+    });
 });
