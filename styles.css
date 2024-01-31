@@ -113,15 +113,6 @@ nav ul li a {
     margin-top: 5px;
 }
 
-.community-cards {
-    display: flex;
-    justify-content: center;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 50px;
-}
-
 .card {
     width: 80px;
     height: 112px;
@@ -134,10 +125,10 @@ nav ul li a {
     padding: 10px;
     border-radius: 5px;
     display: flex;
-    flex-wrap: wrap; /* Allow the items to wrap onto the next line */
-    gap: 5px; /* Spacing between buttons */
-    margin-left: 10px; /* Distance from the player's hand */
-    width: 220px; /* Adjust the width as needed */
+    flex-wrap: wrap; 
+    gap: 5px;
+    margin-left: 10px;
+    width: 220px;
 }
 
 .bet-btn {
@@ -156,6 +147,20 @@ nav ul li a {
     background-color: #0056b3;
 }
 
+#potDisplay {
+    position: absolute;
+    top: 75px; 
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px; 
+    font-weight: bold;
+    color: #fff; 
+    background-color: #333; 
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
 .chip-total {
     background-color: #f8f9fa; /* Light background */
     border-radius: 5px;
@@ -163,4 +168,16 @@ nav ul li a {
     margin-top: 5px; /* Spacing from the last button */
     text-align: center;
     font-size: 14px;
+}
+
+#chipPopup {
+    position: absolute;
+    display: none; 
+    z-index: 100; 
+    background-color: #fff; 
+    border: 1px solid #000;
+    border-radius: 5px;
+    padding: 5px;
+    font-size: 14px;
+    white-space: nowrap;
 }
