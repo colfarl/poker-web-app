@@ -33,8 +33,27 @@ nav ul li a {
     text-decoration: none;
 }
 
-#deal-button {
-    margin-left: 20px; /* Adjust space between button and cards */
+.center-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh; /* Full viewport height */
+}
+#start-button {
+    display: block; 
+    margin: 0 auto; 
+    padding: 10px 20px;
+    font-size: 1.2em; 
+    color: #fff; 
+    background-color: #007bff; 
+    border: none;
+    border-radius: 5px; 
+    cursor: pointer; 
+    transition: background-color 1s ease; 
+}
+
+#start-button:hover {
+    background-color: #0056b3; 
 }
 
 #game-container {
@@ -45,10 +64,19 @@ nav ul li a {
 }
 
 .player {
-    display: flex;
-    align-items: center;
+    position: absolute;
+    transform-origin: center center;
 }
 
+.card {
+    width: 60px; 
+    height: 84px;
+    margin: 0 2px;
+}
+
+/* Player Specific Adjustments */
+/* Human player at the bottom center */
+/* Human player at the bottom center */
 #player1 {
     position: absolute;
     bottom: 10px;
@@ -56,42 +84,65 @@ nav ul li a {
     transform: translateX(-50%);
 }
 
+/* Player 2 on the left side, above action log */
 #player2 {
     position: absolute;
-    top: 50%;
-    left: 5px;
-    transform: translateY(-50%) rotate(90deg);
-    transform-origin: center center;
+    left: 10px;
+    top: 250px; /* Adjust based on the action log's position */
+    transform: rotate(90deg);
+}
+
+/* Players 3 and 4 on the top left, pointing downwards */
+#player3, #player4 {
+    position: absolute;
+    top: 85px; /* Adjusted for nav bar */
+    transform: rotate(0deg);
 }
 
 #player3 {
-    position: absolute;
-    top: 75px;
-    left: 25%;  /* Adjust to move left or right */
-    transform: translateX(-50%);
+    left: 10%;
 }
 
 #player4 {
+    left: 30%;
+}
+
+/* Players 5 and 6 on the top right, pointing downwards */
+#player5, #player6 {
     position: absolute;
-    top: 75px;
-    left: 75%;  /* Adjust to move left or right */
-    transform: translateX(-50%);
+    top: 85px; /* Adjusted for nav bar */
+    transform: rotate(0deg);
 }
 
 #player5 {
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%) rotate(90deg);
-    transform-origin: center center;
+    right: 30%;
 }
 
-.winner {
+#player6 {
+    right: 10%;
+}
+
+/* Players 7 and 8 on the right side */
+#player7, #player8 {
     position: absolute;
-    left: 50%;
-    bottom: 60%;  
-    transform: translate(-50%, -50%);
-    text-align: center;
+    right: 10px;
+    transform: rotate(-90deg);
+}
+
+#player7 {
+    top: 35%; /* Adjust for spacing */
+}
+
+#player8 {
+    top: 65%; /* Adjust for spacing */
+}
+
+/* Player 9 to the right of Player 1 */
+#player9 {
+    position: absolute;
+    bottom: 50px;
+    right: 20%;
+    transform: translateX(50%); /* Adjust to ensure spacing from Player 1 */
 }
 
 .community-cards {
@@ -111,12 +162,6 @@ nav ul li a {
 .player-info {
     text-align: center;
     margin-top: 5px;
-}
-
-.card {
-    width: 80px;
-    height: 112px;
-    margin: 0 5px;
 }
 
 .betting-options {
@@ -142,7 +187,9 @@ nav ul li a {
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
-
+#raiseSlider {
+    width: 300px;
+}
 .bet-btn:hover {
     background-color: #0056b3;
 }
@@ -162,10 +209,10 @@ nav ul li a {
 }
 
 .chip-total {
-    background-color: #f8f9fa; /* Light background */
+    background-color: #f8f9fa;
     border-radius: 5px;
     padding: 5px 10px;
-    margin-top: 5px; /* Spacing from the last button */
+    margin-top: 5px;
     text-align: center;
     font-size: 14px;
 }
@@ -180,4 +227,78 @@ nav ul li a {
     padding: 5px;
     font-size: 14px;
     white-space: nowrap;
+}
+
+#game-controls {
+    text-align: center; 
+    margin-top: 30px; 
+    position: absolute;
+    top: 140px; 
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+}
+
+#game-controls button {
+    padding: 10px 20px; 
+    margin: 0 10px;
+    font-size: 1em;
+    color: #fff; 
+    background-color: #2b1dbe; 
+    border: none; 
+    border-radius: 5px;
+    cursor: pointer; 
+    transition: background-color 0.3s ease; 
+}
+
+#game-controls button:hover {
+    background-color: #101f4d; 
+}
+
+#action-log {
+    position: fixed; 
+    bottom: 10px; 
+    left: 10px; 
+    width: 200px; 
+    max-height: 150px; 
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.7); 
+    color: white; 
+    padding: 10px; 
+    border-radius: 5px; 
+    font-size: 0.9em; 
+}
+
+/* Hiding the scrollbar */
+#action-log::-webkit-scrollbar {
+    display: none; 
+}
+
+/* Styling for player profits display */
+#player-profits {
+    margin: 20px auto;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 80%;
+    max-width: 600px;
+    position: absolute; 
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Individual profit line styling */
+#player-profits div {
+    margin-bottom: 10px;
+    padding: 5px;
+    background-color: #eef;
+    border-radius: 4px;
 }
