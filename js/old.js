@@ -3,8 +3,7 @@
 hands=[8, 9, 5, 6, 1,
        2, 3, 10, 4, 7];
 
-handRank = ["4 of a Kind", "Straight Flush", "Straight", "Flush", "High Card",
-"Pair", "Two Pair", "Royal Flush", "3 of a Kind", "Full House" ];
+handRank = [ "High Card", "Pair", "Two Pair", "3 of a Kind", "Straight", "Flush", "Full House","Four of a Kind", "Straight Flush" , "Royal Flush"];
 
 const CardValues = {
     '2':2,
@@ -30,11 +29,11 @@ const SuitValues = {
 };
 
 let players = [
-    { id: 1, hand: [], type: 'human',chips:50000, currentBet: 0, isInGame: true, hasActed: false },
-    { id: 2, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false },
-    { id: 3, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false },
-    { id: 4, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false },
-    { id: 5, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false }
+    { id: 1, hand: [], type: 'human',chips:50000, currentBet: 0, isInGame: true, hasActed: false, isAllIn: false },
+    { id: 2, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false, isAllIn: false },
+    { id: 3, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false, isAllIn: false },
+    { id: 4, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false, isAllIn: false },
+    { id: 5, hand: [], type: 'bot', chips: 50000, currentBet: 0, isInGame: true, hasActed: false, isAllIn: false }
 ];
 
 let pot = 0;
@@ -46,6 +45,7 @@ let bigBlind = 50;
 let dealerPosition = 0;
 let smallBlindPosition = (dealerPosition + 1) % players.length;
 let bigBlindPosition = (dealerPosition + 2) % players.length;
+
 //============================================Deck Operations====================================================
 //Creates a deck of 52 standard cards
 //Cards are stored in a list as (rank, suit)
@@ -100,6 +100,16 @@ function displayHand(hand, playerId) {
         cardImg.className = 'card';
         cardContainer.appendChild(cardImg);
     });
+}
+
+function updatePotTotal() {
+    const potDisplay = document.getElementById('potDisplay');
+    potDisplay.innerText = `Pot: ${pot}`;
+}
+
+function updatePlayerChips(player, newChipTotal) {
+    const playerElement = document.getElementById(`player${player.id}`);
+    playerElement.setAttribute('data-chips', newChipTotal);
 }
 
 function updateActionLog(message) {
@@ -191,6 +201,12 @@ function getSuitValue(card) {
     return SuitValues[card.suit];
 }
 
+function isSpecialStraight(ranks) {
+    var sortedRanks = ranks.slice().sort(function(a, b) { return a - b; });
+    return sortedRanks[0] === 2 && sortedRanks[1] === 3 && 
+           sortedRanks[2] === 4 && sortedRanks[3] === 5 && sortedRanks[4] === 14;
+}
+
 //generates combinations of size k from array
 function generateCombinations(array, k) {
     let result = [];
@@ -235,6 +251,7 @@ function getHandValue(cardRanks) {
     rankCounts[rank] = (rankCounts[rank] >= 1) ? rankCounts[rank] + 1 : 1;
   }
 
+
   // Sort the card ranks based on their frequency and value
   sortedRanks.sort(function(rank1, rank2) {
     var countCompare = rankCounts[rank2] - rankCounts[rank1];
@@ -242,6 +259,9 @@ function getHandValue(cardRanks) {
     return countCompare === 0 ? rankCompare : countCompare;
   });
 
+  if (isSpecialStraight(sortedRanks)) {
+    return 0;
+  }
   // Encode the sorted ranks into a single integer for comparison
   return (sortedRanks[0] << 16) | (sortedRanks[1] << 12) | 
          (sortedRanks[2] << 8) | (sortedRanks[3] << 4) | sortedRanks[4];
@@ -309,51 +329,20 @@ function evaluateAllHands(players, communityCards) {
     return winners;
 }
 //================== Betting Logic ====================================================================
-function bet(player, amount) {
-    if (player.chips >= amount) {
-        player.chips -= amount;
-        player.currentBet += amount;
-        pot += amount;
-        highestBet = Math.max(highestBet, player.currentBet);
-        
-        //Update UI
-        updatePotTotal();
-        updatePlayerChips(player, player.chips);
-    } else {
-        console.error('Not enough chips.');
-    }
-}
 
-function updatePlayerChips(player, newChipTotal) {
-    const playerElement = document.getElementById(`player${player.id}`);
-    playerElement.setAttribute('data-chips', newChipTotal);
-}
 
-function updatePotTotal() {
-    const potDisplay = document.getElementById('potDisplay');
-    potDisplay.innerText = `Pot: ${pot}`;
-}
-
-function fold(player) {
-    player.isInGame = false;
-    updateActionLog(`Player ${player.id} folds`);
-}
-
-function call(player) {
-    const amount = highestBet - player.currentBet;
-    bet(player, amount);
-    updateActionLog(`Player ${player.id} calls (${amount} chips)`);
-}
-
-function raise(player, amount) {
-    if (amount >= 2 * highestBet) {
-        bet(player, amount);
-        highestBet = player.currentBet; 
-        resetAction();
-        player.hasActed = true;
-        updateActionLog(`Player ${player.id} raises ${amount} chips`);
-    } else {
-        console.error('Raise must be at least double the previous bet.');
+function isValidAction(player, action) {
+    switch (action) {
+        case 'call':
+            return canCall(player);
+        case 'check':
+            return canCheck(player);
+        case 'fold':
+            return true; // Fold is always a valid action
+        case 'allin':
+            return true; // All-in is always valid if the player has chips
+        default:
+            return false;
     }
 }
 
@@ -378,22 +367,29 @@ function playerAction(action) {
     resolvePlayerAction(action);
 }
 
-function handlePlayerAction(player, action) {
-    switch(action) {
-        case 'call':
-            call(player, highestBet);
-            break;
-        case 'fold':
-            fold(player);
-            break;
-        case 'check':
-            check(player);
-            break;
-        case 'allin':
-            bet(player, player.chips);
-            break;
-        default:
-            console.error(`Unknown action: ${action}`);
+async function handlePlayerAction(player, action) {
+    if (isValidAction(player, action)) {
+        switch (action) {
+            case 'call':
+                call(player);
+                break;
+            case 'fold':
+                fold(player);
+                break;
+            case 'check':
+                check(player);
+                break;
+            case 'allin':
+                bet(player, player.chips);
+                break;
+            default:
+                console.error(`Unknown action: ${action}`);
+        }
+        resolvePlayerAction(action); // Resolve the promise only if the action is valid
+    } else {
+        updateActionLog(`Invalid action: ${action}`);
+        const newAction = await waitForPlayerDecision();
+        await handlePlayerAction(player, newAction);
     }
 }
 
@@ -404,6 +400,7 @@ function resetAction(){
         }
     })
 }
+
 function allPlayersActed() {
     return players.every(player => !player.isInGame || player.hasActed);
 }
@@ -424,13 +421,17 @@ async function bettingRound() {
 
         if (player.isInGame) {
             if (player.type === 'bot') {
-                botDecision(player);
+                botDecision(player, false);
             } else {
                 const action = await waitForPlayerDecision();
                 if(action !== 'raise'){
-                    handlePlayerAction(player, action);
+                    await handlePlayerAction(player, action);
                 }
                 player.hasActed = true; // Mark that the player has taken an action
+            }
+            if (player.isAllIn) {
+                await allInBettingRound(currentPlayerIndex);
+                break;
             }
         }
 
@@ -440,8 +441,23 @@ async function bettingRound() {
         if (allPlayersActed() && highestBetEqualized()) {
             bettingContinues = false;
         }
-        console.log(allPlayersActed());
-        console.log(highestBetEqualized());
+    }
+}
+
+async function allInBettingRound(allInPlayerIndex) {
+    let currentPlayerIndex = (allInPlayerIndex + 1) % players.length;
+
+    while (currentPlayerIndex !== allInPlayerIndex) {
+        let player = players[currentPlayerIndex];
+
+        if (player.type === 'bot') {
+            botDecision(player, true);
+        } else {
+            const action = await waitForPlayerDecision();
+            await handlePlayerAction(player, action);
+            player.hasActed = true;
+        }
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
     }
 }
 
@@ -450,6 +466,7 @@ function resetGame() {
         player.hand = [];
         player.currentBet = 0;
         player.isInGame = true;
+        player.isAllIn = false;
     });
     pot = 0;
     highestBet = 0;
@@ -463,7 +480,7 @@ function awardWinner(winners, communityCards) {
         players[winner].chips += pot;
         updatePlayerChips(players[winner], players[winner].chips);
         const [rank, _score, _hand] = evaluateHand(players[winner].hand, communityCards);
-        updateActionLog(`Player ${players[winner].id} wins the pot of ${pot} chips with a ${handRank[rank]}`);
+        updateActionLog(`Player ${players[winner].id} wins the pot of ${pot} chips with a ${handRank[rank -1]}`);
     } else {
         // Multiple winners - chop the pot
         const splitPot = Math.floor(pot / winners.length);
@@ -476,7 +493,7 @@ function awardWinner(winners, communityCards) {
     }
 }
 
-//================== Early game Logic =============================================================================================
+//================== Game Logic =============================================================================================
 function updateGameState(newState) {
     gameState = newState;
     switch(gameState) {
@@ -519,15 +536,14 @@ function dealHands(deck) {
 }
 
 //NOT IMPLEMENTED
-function botDecision(player) {
+function botDecision(player, _isAllInRound) {
     if(highestBet === 0){
         check(player);
-        player.hasActed = true;
     }
     else{
         call(player);
-        player.hasActed = true;
     }
+    player.hasActed = true;
 }
 
 function postBlinds() {
@@ -550,6 +566,10 @@ function resetBetting(){
     players.forEach(player => {
         player.currentBet = 0;
     });
+}
+
+function isAnyPlayerAllIn() {
+    return players.some(player => player.isAllIn);
 }
 
 //basic Round logic
@@ -582,7 +602,11 @@ async function playRound() {
     resetAction();
     resetBetting();
     updateActionLog('--------Flop---------');
-    await bettingRound();
+    
+    if(!isAnyPlayerAllIn()){
+        await bettingRound();
+    }
+    
 
     //Deal the Turn 
     dealTurnOrRiver(deck, communityCards);
@@ -594,7 +618,10 @@ async function playRound() {
     currentStage = "turn";
     resetAction();
     resetBetting();
-    await bettingRound();
+
+    if(!isAnyPlayerAllIn()){
+        await bettingRound();
+    }
 
     //Deal river
     dealTurnOrRiver(deck, communityCards);
@@ -605,7 +632,10 @@ async function playRound() {
     currentStage = "river";
     resetAction();
     resetBetting();
-    await bettingRound();
+
+    if(!isAnyPlayerAllIn()){
+        await bettingRound();
+    }
     
     //Find Best Hand
     const winners = evaluateAllHands(players, communityCards);
