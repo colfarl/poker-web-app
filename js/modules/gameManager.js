@@ -21,6 +21,7 @@ export class GameManager {
         this.handRank = ["High Card", "Pair", "Two Pair", "3 of a Kind", "Straight", "Flush", "Full House", "Four of a Kind", "Straight Flush", "Royal Flush"];
         this.resolvePlayerAction = null;
         this.minRaise = 100;
+        this.numRaises = 0;
     }
 
     addPlayer(id, type, chips) {
@@ -34,6 +35,17 @@ export class GameManager {
     
     canCheck(player) {
         return this.highestBet === 0 || player.currentBet === this.highestBet;
+    }
+
+    getLowestChipCount() {
+        if (this.players.length === 0) return 0;
+        let minChips = this.players[0].chips;
+        this.players.forEach(player => {
+            if (player.chips < minChips) {
+                minChips = player.chips;
+            }
+        });
+        return minChips; 
     }
 
     async bet(player, amount) {
@@ -76,26 +88,31 @@ export class GameManager {
             player.currentBet = 0;
             player.isInGame = true;
             player.isAllIn = false;
-            if(player.chips <= 25000){
-                player.chips += 25000;
-                player.buyIns -= 25000;
+            player.hasActed = false;
+            if(player.chips <= 2500){
+                player.chips += 2500;
+                player.buyIns -= 2500;
+                updatePlayerChips(player, player.chips + 2500);
             }
         });
         this.pot = 0;
         this.highestBet = 0;
         this.minRaise = 100;
+        updateMinRaise(this.minRaise); 
         this.currentStage = 'pre-flop';
     }
 
     async raise(player, amount) {
-        if (amount >= 2 * this.highestBet) {
-            this.minRaise += amount;
-            await this.resetAction();
-            await this.bet(player, amount);
-            player.hasActed = true;
-            updateActionLog(`Player ${player.id} raises ${amount} chips`);
-            updateMinRaise(this.minRaise); 
-        } 
+        if(amount > this.getLowestChipCount()){
+            amount = this.getLowestChipCount();
+        }
+        this.minRaise += amount;
+        await this.resetAction();
+        await this.bet(player, amount);
+        player.hasActed = true;
+        this.numRaises += 1;
+        updateActionLog(`Player ${player.id} raises ${amount} chips`);
+        updateMinRaise(this.minRaise); 
     }
 
     async resetAction(){
@@ -113,9 +130,19 @@ export class GameManager {
             case 'fold':
                 return true;
             case 'allin':
-                return true;
+                if(this.isAnyPlayerAllIn()){
+                    false;
+                }
+                else{
+                    return true;
+                }
             case 'raise':
-                return true;
+                if(this.isAnyPlayerAllIn()){
+                    false;
+                }
+                else{
+                    return true;
+                }
             default:
                 return false;
         }
@@ -189,7 +216,10 @@ export class GameManager {
                     this.check(player);
                     break;
                 case 'allin':
-                    this.bet(player, player.chips);
+                    const min = this.getLowestChipCount()
+                    this.bet(player, min);
+                    updateActionLog(`Player 1 goes all in with ${min} chips`);
+                    player.isAllIn = true;
                     break;
                 case 'raise':
                     break;
@@ -204,45 +234,198 @@ export class GameManager {
         }
     }
 
+    topHandPreFlop(player){
+        if(this.isAnyPlayerAllIn()){
+            this.call(player);
+        }
+        else if(this.numRaises >= 3){
+            const min = this.getLowestChipCount();
+            this.bet(player, min);
+            player.isAllIn = true;
+            updateActionLog(`Player ${player.id} goes all in with ${min} chips`);
+        }
+        else if(this.highestBet - player.currentBet > this.bigBlind * 10){
+            this.call(player);
+        }
+        else if (this.numRaises === 0){
+            this.raise(player, this.bigBlind * 4);
+        }
+        else{
+            this.raise(player, this.minRaise * 2);
+        }
+    }
+
+    highPreFlop(player){
+        const randomNumber = Math.floor(Math.random() * 10) + 1;
+        if(this.isAnyPlayerAllIn() && randomNumber >= 7){
+            this.call(player);
+        }
+        else if(this.isAnyPlayerAllIn()){
+            this.fold(player);
+        }
+        else if(this.highestBet - player.currentBet >= this.bigBlind * 10 && randomNumber >= 6){
+            this.call(player);
+        }
+        else if(this.numRaises === 0){
+            this.raise(player, this.bigBlind * 4);
+        }
+        else if(this.highestBet - player.currentBet < 10 * this.bigBlind){
+            this.call(player);
+        }
+        else{
+            this.fold(player);
+        }
+    }
+
+    midPreFlop(player, position){
+        const randomNumber = Math.floor(Math.random() * 10) + 1;
+        if(this.isAnyPlayerAllIn() && randomNumber === 1){
+            this.call(player);
+        }
+        else if (this.isAnyPlayerAllIn()){
+            this.fold(player);
+        }
+        else if(this.numRaises === 0 && position >= 7){
+            this.raise(player, this.bigBlind * 4);
+        }
+        else if(this.numRaises === 0 && position < 7){
+            this.call(player);
+        }
+        else if(this.highestBet - player.currentBet <=  6 * this.bigBlind){
+            this.call(player);
+        }
+        else{
+            this.fold(player);
+        }
+    }
+
     async botPreFlop(player, position, strength){
-        if (strength === 1) {
-            console.log('statement 1');
-            await this.raise(player, this.minRaise * 3);
-        } else if (strength <= 4) {
-            console.log('statement 2');
-            if (this.highestBet <= 400) {
-                console.log('statement 2 1');
-                await this.raise(player, this.minRaise * 3);
-            } else {
-                console.log('statement 2 2');
-                await this.call(player);
+        if(strength === 1){
+            this.topHandPreFlop(player);
+        }
+        else if(strength <= 3){
+            this.highPreFlop(player);
+        }
+        else if(strength <= 5){
+            this.midPreFlop(player, position);
+        }
+        else if(strength === 6 && position >= 6){
+            if(this.numRaises === 0){
+                this.raise(player, this.bigBlind * 4);
             }
-        } else if (strength === 5 && position <= 3) {
-            console.log('statement 3');
-            await this.call(player);
-        } else if (strength === 6) {
-            console.log('statement 4');
-            if (position > 4 && this.minRaise <= 250) {
-                console.log('statement 4 1');
-                await this.raise(player, this.minRaise);
-            } else if (position > 3 && this.highestBet <= 800) {
-                console.log('statement 4 2');
-                await this.call(player);
+            else if(this.highestBet - player.currentBet <=  7 * this.bigBlind){
+                this.call(player);
             }
             else{
-                //incomplete
-                console.log('statement 4 3');
-                await this.fold(player);
+                this.fold(player);
             }
-        } else if (strength <= 8 && position >= 7 && this.highestBet <= 500) {
-            console.log('statement 5');
-            await this.call(player);
-        } else if (position === 0 && this.highestBet <= 200 && this.canCall(player)) {
-            console.log('statement 6');
-            await this.call(player);
-        } else {
-            console.log('statement 7');
-            await this.fold(player);
+        }
+
+        else if(strength <= 8 && position >= 6 && this.highestBet - player.currentBet <= 6 * this.bigBlind){
+           this.call(player);
+        }
+        else if((position === 0 || position === 1) && this.highestBet === this.bigBlind){
+            if(this.canCheck(player)){
+                this.check(player);
+            }
+            else{
+                this.call(player);
+            }
+        }
+        else{
+            this.fold(player);
+        }
+    }
+
+    countActiveOpponents(players) {
+        const activePlayers = players.filter(player => player.isInGame);
+        return activePlayers.length;
+    }
+
+    //to be implemented
+    shouldBluff(position){
+        return position > 6;
+    }
+
+    getPotOdds(callAmount){
+        if (callAmount == 0) return Infinity;
+        return this.pot / callAmount;
+    }
+    
+
+    async getHandOdds(playerHand, communityCards, handValues) {
+        let deck = createDeck();
+        let improvingCards = 0;
+    
+        deck = deck.filter(card => 
+            !playerHand.concat(communityCards).some(c => c.rank === card.rank && c.suit === card.suit));
+        
+        for (let card of deck) {
+           
+            communityCards = communityCards.concat(card);
+            let [newStrength, _currScore, _bestHand] = HandEvaluation.evaluateHand(playerHand, communityCards, handValues);
+            communityCards.pop();
+            if (newStrength > 3) {
+                improvingCards++;
+            }
+        }
+        let handOdds = improvingCards / deck.length;
+        return handOdds;
+    }
+    
+
+    async postFlopDecision(player, _position) {
+        const potOdds = this.getPotOdds(this.highestBet - player.currentBet);
+        let handOdds = 0;
+        if(this.communityCards.length < 5){
+            handOdds = await this.getHandOdds(player.hand, this.communityCards, this.hands); 
+        }
+        const [bestRank, currScore, bestHand] = HandEvaluation.evaluateHand(player.hand, this.communityCards, this.hands);
+    
+        
+        if (bestRank >= 4) { 
+            if (this.numRaises === 0) {
+                this.raise(player, Math.floor(this.pot / 2)); 
+            } else if(this.numRaises === 1) {
+                this.raise(player, this.minRaise);
+            }
+            else {
+                this.call(player); 
+            }
+        }
+        else if(bestRank >= 2){
+            if (this.numRaises === 0) {
+                const randomNumber = Math.floor(Math.random() * 10) + 1;
+                if(randomNumber > 5){
+                    this.raise(player, Math.floor(this.pot / 2)); 
+                }
+                else{
+                    this.check(player);
+                }
+            }
+            else if (this.numRaises === 1){
+                const randomNumber = Math.floor(Math.random() * 10) + 1;
+                if(randomNumber < 7){
+                    this.call(player);
+                }
+                else{
+                    this.raise(player, Math.floor(this.pot / 2)); 
+                }
+            }
+            else{
+                this.fold(player);
+            }
+        }
+        else {
+            if (handOdds > potOdds && handOdds > 0.3) { 
+                this.call(player);
+            } else {
+                if (this.canCheck(player)) {
+                    this.check(player); 
+                } else {
+                    this.fold(player); 
+                }
+            }
         }
     }
 
@@ -251,11 +434,8 @@ export class GameManager {
             const strength = HandEvaluation.evaluatePreFlopHand(player.hand);
             await this.botPreFlop(player, position, strength);
         }
-        else if(this.canCheck(player)){
-            await this.check(player);
-        }
         else{
-            await this.call(player);
+            await this.postFlopDecision(player, position)
         }
         player.hasActed = true;
     }
@@ -301,7 +481,6 @@ export class GameManager {
 
         while (bettingContinues) {
             const player = this.players[currentPlayerIndex];
-            console.log(`Player ${player.id}, in game: ${player.isInGame},has acted: ${player.hasActed}`);
             if (player.isInGame) {
                 
                 if (player.type === 'bot') {
@@ -318,7 +497,6 @@ export class GameManager {
                 }
             }
             
-            console.log(`Player ${player.id}, in game: ${player.isInGame},has acted: ${player.hasActed}`);
             currentPlayerIndex = (currentPlayerIndex + 1) % this.players.length;
             position = (position + 1) % this.players.length;
             if ((this.allPlayersActed() && this.highestBetEqualized()) || this.checkForEndOfRound(this.players)) {
@@ -332,13 +510,14 @@ export class GameManager {
     
         while (currentPlayerIndex !== allInPlayerIndex) {
             let player = this.players[currentPlayerIndex];
-    
-            if (player.type === 'bot') {
-                this.botDecision(player, true);
-            } else {
-                const action = await this.waitForPlayerDecision();
-                await this.handlePlayerAction(player, action);
-                player.hasActed = true;
+            if(player.isInGame){
+                if (player.type === 'bot') {
+                    this.botDecision(player, true, 0);
+                } else {
+                    const action = await this.waitForPlayerDecision();
+                    await this.handlePlayerAction(player, action);
+                    player.hasActed = true;
+                }
             }
             currentPlayerIndex = (currentPlayerIndex + 1) % this.players.length;
         }
@@ -365,9 +544,9 @@ export class GameManager {
         this.deck = createDeck();
         shuffleDeck(this.deck);
         this.communityCards = [];
-
         this.dealHands(this.deck);
-        
+        this.numRaises = 0;
+
         for (let i = 0; i < this.players.length; i++) {
             if (i === 0) {
                 displayHand(this.players[i].hand, i + 1);
@@ -379,6 +558,7 @@ export class GameManager {
         this.postBlinds();
 
         await this.bettingRound();
+        this.numRaises = 0;
 
         if(this.checkForEndOfRound(this.players)){
             this.communityCards = dealFlop(this.deck, this.communityCards);
@@ -402,6 +582,7 @@ export class GameManager {
 
         if (!this.isAnyPlayerAllIn()) {
             await this.bettingRound();
+            this.numRaises = 0;
         }
 
         if(this.checkForEndOfRound(this.players)){
@@ -425,6 +606,7 @@ export class GameManager {
 
         if (!this.isAnyPlayerAllIn()) {
             await this.bettingRound();
+            this.numRaises = 0;
         }
 
         if(this.checkForEndOfRound(this.players)){
@@ -446,6 +628,7 @@ export class GameManager {
 
         if (!this.isAnyPlayerAllIn()) {
             await this.bettingRound();
+            this.numRaises = 0;
         }
         
         // Find Best Hand

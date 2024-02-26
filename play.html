@@ -6,14 +6,13 @@
     <title>Document</title>
     <link rel="stylesheet" type="text/css" media="screen" href="styles.css">
 </head>
-<body>
+<body id="playPage">
     <header>
         <h1>Poker 101</h1>
         <nav>
             <ul>
                 <li><a href="index.html">Home</a></li>
-                <li><a href="learn.html">Learn</a></li>
-                <li><a href="play.html">Play</a></li>
+                <li><a href="play.html" class="active">Play</a></li>
                 <li><a href="contact.html">Contact</a></li>
             </ul>
         </nav>
@@ -23,43 +22,43 @@
     </div>
     <div id="potDisplay">Pot: 0</div>
     <div id="chipPopup" style="display: none;"></div>
-    <div id="player1" class="player" data-chips="50000">
+    <div id="player1" class="player" data-chips="5000">
         <div class="player-cards"></div>
         <div class="betting-options">
             <button class="bet-btn" id="player1-call">Call</button>
             <button class="bet-btn" id="player1-check">Check</button>
             <button class="bet-btn" id="player1-fold">Fold</button>
             <button class="bet-btn" id="player1-allin">All In</button>
-            <input type="range" id="raiseSlider" min="50" max="10000" value="50" step="50">
-            <span id="raiseAmountLabel">Raise Amount: 50</span>
+            <input type="range" id="raiseSlider" min="100" max="5000" value="50" step="50">
+            <span id="raiseAmountLabel">Raise Amount: 100</span>
             <button class="bet-btn" id="player1-raise">Raise</button>
         </div>
     </div>
-    <div id="player2" class="player" data-chips="50000">
+    <div id="player2" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
-    <div id="player3" class="player" data-chips="50000">
+    <div id="player3" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
-    <div id="player4" class="player" data-chips="50000">
+    <div id="player4" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
-    <div id="player5" class="player" data-chips="50000">
+    <div id="player5" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
-    <div id="player5" class="player" data-chips="50000">
+    <div id="player5" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
-    <div id="player6" class="player" data-chips="50000">
+    <div id="player6" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
-    <div id="player7" class="player" data-chips="50000">
+    <div id="player7" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
-    <div id="player8" class="player" data-chips="50000">
+    <div id="player8" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
-    <div id="player9" class="player" data-chips="50000">
+    <div id="player9" class="player" data-chips="5000">
         <div class="player-cards"></div>
     </div>
     <div id="game-controls">
@@ -68,6 +67,7 @@
     </div>
     <div id="community-cards" class="community-cards"></div>
     <div id="action-log"></div>
+    <div id="player-profits" style="display: none;"></div>
     <script type="module" src="js/play.js"></script>
 </body>
 </html>
