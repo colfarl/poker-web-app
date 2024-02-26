@@ -117,8 +117,7 @@ export class HandEvaluation {
     
         players.forEach((player, index) => {
             if (player.isInGame) {
-                console.log(player.hand);
-                const [rank, score, _hand] = HandEvaluation.evaluateHand(player.hand, communityCards, handValues);
+                const [rank, score, hand] = HandEvaluation.evaluateHand(player.hand, communityCards, handValues);
     
                 // Compare the rank and score to determine the best hand or ties
                 if (rank > bestHandScore) {
@@ -142,8 +141,8 @@ export class HandEvaluation {
             '1': ["AA", "KK", "QQ", "JJ", "AKs"],
             '2': ["1010", "AQs", "AJs", "KQs", "AK"],
             '3': ["99", "A10s", "KJs", "QJs", "J10s"],
-            '4': ["88", "K10s", "Q10s", "J9s", "AJ", "KQ"],
-            '5': ["77", "A9s", "A8s", "A7s", "A6s", "A5s", "A4s", "A3s", "A2s", "Q9s", "109s", "98s", "87s", "KJ", "QJ", "JT"],
+            '4': ["88", "K10s", "Q10s", "J9s", "AJ", "KQ", "AQ"],
+            '5': ["77", "A9s", "A8s", "A7s", "A6s", "A5s", "A4s", "A3s", "A2s", "Q9s", "109s", "98s", "87s", "KJ", "QJ", "J10"],
             '6': ["66", "55", "44", "33", "22", "A10", "K10", "Q10"],
             '7': ["A9", "A8", "A7", "A6", "A5", "A4", "A3", "A2", "K9s", "K8s", "K7s", "K6s", "K5s", "K4s", "K3s", "K2s", "Q8s", "Q7s", "J8s", "108s", "97s", "87", "76s", "65s", "54s"],
             '8': ["K9", "K8", "Q9", "J9", "J8", "109", "108", "98", "87", "76", "65", "54"]

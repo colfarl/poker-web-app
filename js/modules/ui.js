@@ -104,12 +104,12 @@ export function inProgressUI() {
 
 export function displayPlayerProfits(gameManager) {
     const profitsContainer = document.getElementById('player-profits');
-    profitsContainer.innerHTML = ''; // Clear previous content
+    profitsContainer.innerHTML = '';
     gameManager.players.forEach(player => {
-        const profit = player.chips + player.buyIns; // Calculate profit
+        const profit = player.chips + player.buyIns;
         const playerProfitElement = document.createElement('div');
         playerProfitElement.innerText = `Player ${player.id}: Profit ${profit} chips`;
         profitsContainer.appendChild(playerProfitElement);
     });
-    profitsContainer.style.display = 'block'; // Show the profits
+    profitsContainer.style.display = 'block';
 }

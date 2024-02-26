@@ -1,3 +1,4 @@
+
 body {
     background: rgb(13, 94, 13);
     background-size: cover;
@@ -37,8 +38,9 @@ nav ul li a {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 80vh; /* Full viewport height */
+    height: 80vh;
 }
+
 #start-button {
     display: block; 
     margin: 0 auto; 
@@ -301,4 +303,59 @@ nav ul li a {
     padding: 5px;
     background-color: #eef;
     border-radius: 4px;
+}
+
+/* Introduction section styles */
+.introduction {
+    padding: 2rem;
+    background-color: #ffffff;
+    margin-bottom: 2rem;
+}
+
+.introduction h2 {
+    color: #022349; /* Dark blue to match the header */
+}
+
+/* Features section styles */
+.features {
+    padding: 2rem;
+    background-color: #e8eef1; /* Light gray background */
+}
+
+.features h2,
+.features ul {
+    margin-top: 0;
+}
+
+.features li {
+    margin-bottom: 10px;
+}
+
+/* Footer styles */
+footer {
+    background-color: #022349;
+    color: #ffffff;
+    text-align: center;
+    padding: 1rem 0;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+footer p {
+    margin: 0;
+    padding: 0.5rem;
+}
+
+footer a {
+    color: #cddc39; /* Light green for links */
+}
+
+footer a:hover {
+    color: #ffffff;
+}
+
+#homePage {
+    background: #f4f4f4; 
+    background-size: cover; 
 }

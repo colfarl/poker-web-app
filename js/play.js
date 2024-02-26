@@ -3,15 +3,15 @@ import { GameManager } from './modules/gameManager.js';
 
 
 const gameManager = new GameManager();
-gameManager.addPlayer(1, 'human', 50000);
-gameManager.addPlayer(2, 'bot', 50000);
-gameManager.addPlayer(3, 'bot', 50000);
-gameManager.addPlayer(4, 'bot', 50000);
-gameManager.addPlayer(5, 'bot', 50000);
-gameManager.addPlayer(6, 'bot', 50000);
-gameManager.addPlayer(7, 'bot', 50000);
-gameManager.addPlayer(8, 'bot', 50000);
-gameManager.addPlayer(9, 'bot', 50000);
+gameManager.addPlayer(1, 'human', 5000);
+gameManager.addPlayer(2, 'bot', 5000);
+gameManager.addPlayer(3, 'bot', 5000);
+gameManager.addPlayer(4, 'bot', 5000);
+gameManager.addPlayer(5, 'bot', 5000);
+gameManager.addPlayer(6, 'bot', 5000);
+gameManager.addPlayer(7, 'bot', 5000);
+gameManager.addPlayer(8, 'bot', 5000);
+gameManager.addPlayer(9, 'bot', 5000);
 
 // Initialize the game when the window loads
 window.onload = () => {
