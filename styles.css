@@ -1,4 +1,3 @@
-
 body {
     background: rgb(13, 94, 13);
     background-size: cover;
@@ -97,7 +96,7 @@ nav ul li a {
 /* Players 3 and 4 on the top left, pointing downwards */
 #player3, #player4 {
     position: absolute;
-    top: 85px; /* Adjusted for nav bar */
+    top: 120px; /* Adjusted for nav bar */
     transform: rotate(0deg);
 }
 
@@ -112,7 +111,7 @@ nav ul li a {
 /* Players 5 and 6 on the top right, pointing downwards */
 #player5, #player6 {
     position: absolute;
-    top: 85px; /* Adjusted for nav bar */
+    top: 120px; /* Adjusted for nav bar */
     transform: rotate(0deg);
 }
 
@@ -132,7 +131,7 @@ nav ul li a {
 }
 
 #player7 {
-    top: 35%; /* Adjust for spacing */
+    top: 40%; /* Adjust for spacing */
 }
 
 #player8 {
@@ -198,7 +197,7 @@ nav ul li a {
 
 #potDisplay {
     position: absolute;
-    top: 75px; 
+    top: 115px; 
     left: 50%;
     transform: translateX(-50%);
     font-size: 16px; 
@@ -235,7 +234,7 @@ nav ul li a {
     text-align: center; 
     margin-top: 30px; 
     position: absolute;
-    top: 140px; 
+    top: 375px; 
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -305,30 +304,72 @@ nav ul li a {
     border-radius: 4px;
 }
 
-/* Introduction section styles */
-.introduction {
-    padding: 2rem;
+/* Reset margins and paddings for a cleaner look */
+
+
+/* General body styles */
+#homePage, #contactPage {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+    
+}
+
+/* Header styles */
+header {
+    background-color: #022349; /* Dark blue background */
+    color: #ffffff;
+    padding: 1rem 0;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    margin-bottom: 0.5rem;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+nav ul {
+    list-style: none;
+}
+
+nav ul li {
+    display: inline;
+    margin: 0 20px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+nav ul li a:hover {
+    color: #cddc39; /* Light green for hover effect */
+}
+
+.introduction, .features {
     background-color: #ffffff;
-    margin-bottom: 2rem;
-}
-
-.introduction h2 {
-    color: #022349; /* Dark blue to match the header */
-}
-
-/* Features section styles */
-.features {
     padding: 2rem;
-    background-color: #e8eef1; /* Light gray background */
+    margin-bottom: 20px;
+    border-radius: 5px; /* Adds rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Adds subtle shadow */
 }
 
-.features h2,
+.introduction h2, .features h2 {
+    color: #022349;
+    margin-bottom: 1rem;
+}
+
 .features ul {
-    margin-top: 0;
-}
-
-.features li {
-    margin-bottom: 10px;
+    list-style-type: circle; /* Changes the list style */
+    margin-left: 20px; /* Adds indentation to the list */
 }
 
 /* Footer styles */
@@ -337,25 +378,50 @@ footer {
     color: #ffffff;
     text-align: center;
     padding: 1rem 0;
+    margin-top: 20px;
     position: relative;
     bottom: 0;
-    width: 100%;
-}
-
-footer p {
-    margin: 0;
-    padding: 0.5rem;
+    
 }
 
 footer a {
-    color: #cddc39; /* Light green for links */
+    color: #cddc39;
+    text-decoration: none;
 }
 
 footer a:hover {
     color: #ffffff;
 }
 
-#homePage {
-    background: #f4f4f4; 
-    background-size: cover; 
+/* Button style */
+a.button {
+    display: inline-block;
+    background-color: #cddc39; /* Light green background */
+    color: #022349; /* Dark blue text */
+    padding: 10px 20px;
+    margin-top: 20px; /* Adds space above the button */
+    border-radius: 5px; /* Rounded corners */
+    text-decoration: none; /* Removes underline from links */
+    font-weight: bold;
+}
+
+a.button:hover {
+    background-color: #b0b839; 
+}
+
+#contactPage main {
+    background-color: #ffffff;
+    padding: 20px;
+    margin-top: 20px; 
+    border-radius: 5px; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+}
+
+.contact-info {
+    margin-bottom: 20px;
+}
+
+.contact-info h2 {
+    color: #022349;
+    margin-bottom: 10px;
 }
